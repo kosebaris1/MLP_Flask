@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Balık Ağırlık Tahmin Uygulaması</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f0f4ff;
+            font-family: "Segoe UI", sans-serif;
+        }
+
+        .card {
+            border: none;
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .btn-custom {
+            background: linear-gradient(90deg, #007bff, #0056d6);
+            border: none;
+            padding: 12px;
+            width: 100%;
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: 0.3s;
+            margin-top: 15px;
+        }
+        .btn-custom:hover {
+            background: linear-gradient(90deg, #0056d6, #0040a8);
+            transform: translateY(-2px);
+        }
+
+        .result-box {
+            margin-top: 25px;
+            padding: 18px;
+            background: #e9ffe8;
+            border-left: 6px solid #29a329;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .error-msg {
+            color: #d9534f;
+            font-size: 14px;
+            margin-top: -5px;
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+            margin-bottom: 8px;
+        }
+
+        input[type="number"]:focus, select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+
+        .is-valid {
+            border-color: #28a745 !important;
+        }
+
+        .is-invalid:focus {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+        }
+
+        .is-valid:focus {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5" style="max-width: 600px;">
+        <div class="card">
+
+            <h2>🐟 Balık Ağırlık Tahmin Uygulaması</h2>
+
+            <!-- Validation Alerts -->
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" id="fishForm" novalidate>
+
+                <label for="species">Balık Türü:</label>
+                <select class="form-control" name="species" id="species" required>
+                    <option value="">Tür seçiniz...</option>
+                    <option value="Bream" {% if form_data.species == "Bream" %}selected{% endif %}>Bream (Çapak Balığı)</option>
+                    <option value="Roach" {% if form_data.species == "Roach" %}selected{% endif %}>Roach (Kızılkanat)</option>
+                    <option value="Whitefish" {% if form_data.species == "Whitefish" %}selected{% endif %}>Whitefish (Beyaz Balık)</option>
+                    <option value="Parkki" {% if form_data.species == "Parkki" %}selected{% endif %}>Parkki</option>
+                    <option value="Perch" {% if form_data.species == "Perch" %}selected{% endif %}>Perch (Tatlısu Levreği)</option>
+                    <option value="Pike" {% if form_data.species == "Pike" %}selected{% endif %}>Pike (Turna Balığı)</option>
+                    <option value="Smelt" {% if form_data.species == "Smelt" %}selected{% endif %}>Smelt (Gümüş Balığı)</option>
+                </select>
+                <small class="form-text text-muted">Örnek: Bream, Pike, Perch vb.</small>
+                <div class="error-msg" id="speciesError"></div>
+
+                <label for="length1">Uzunluk 1 (Dikey Uzunluk - cm):</label>
+                <input type="number" step="0.01" class="form-control" name="length1" id="length1" value="{{ form_data.length1 }}" placeholder="Örnek: 23.2, 26.5, 30.0" required>
+                <small class="form-text text-muted">Balığın dikey uzunluğunu cm cinsinden giriniz (örn: 23.2)</small>
+                <div class="error-msg" id="l1Error"></div>
+
+                <label for="length2">Uzunluk 2 (Çapraz Uzunluk - cm):</label>
+                <input type="number" step="0.01" class="form-control" name="length2" id="length2" value="{{ form_data.length2 }}" placeholder="Örnek: 25.4, 29.0, 31.2" required>
+                <small class="form-text text-muted">Balığın çapraz uzunluğunu cm cinsinden giriniz (örn: 25.4)</small>
+                <div class="error-msg" id="l2Error"></div>
+
+                <label for="length3">Uzunluk 3 (Çapraz Uzunluk - cm):</label>
+                <input type="number" step="0.01" class="form-control" name="length3" id="length3" value="{{ form_data.length3 }}" placeholder="Örnek: 30.0, 33.5, 34.0" required>
+                <small class="form-text text-muted">Balığın en uzun çapraz uzunluğunu cm cinsinden giriniz (örn: 30.0)</small>
+                <div class="error-msg" id="l3Error"></div>
+
+                <label for="height">Yükseklik (cm):</label>
+                <input type="number" step="0.01" class="form-control" name="height" id="height" value="{{ form_data.height }}" placeholder="Örnek: 11.52, 12.48, 12.73" required>
+                <small class="form-text text-muted">Balığın yüksekliğini cm cinsinden giriniz (örn: 11.52)</small>
+                <div class="error-msg" id="heightError"></div>
+
+                <label for="width">Genişlik (cm):</label>
+                <input type="number" step="0.01" class="form-control" name="width" id="width" value="{{ form_data.width }}" placeholder="Örnek: 4.02, 4.31, 5.13" required>
+                <small class="form-text text-muted">Balığın genişliğini cm cinsinden giriniz (örn: 4.02)</small>
+                <div class="error-msg" id="widthError"></div>
+
+                <button type="submit" class="btn-custom">Ağırlığı Tahmin Et</button>
+            </form>
+
+            {% if prediction %}
+                <div class="result-box">
+                    Tahmin Edilen Ağırlık: <b>{{ prediction }} gram</b>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+<script>
+// Gerçek zamanlı validasyon
+function validateField(input, fieldName, min, max, errorId) {
+    const value = parseFloat(input.value);
+    const errorEl = document.getElementById(errorId);
+    
+    if (!input.value || input.value.trim() === "") {
+        errorEl.textContent = "Bu alan zorunludur.";
+        input.classList.add("is-invalid");
+        return false;
+    }
+    
+    if (isNaN(value)) {
+        errorEl.textContent = "Lütfen geçerli bir sayı giriniz.";
+        input.classList.add("is-invalid");
+        return false;
+    }
+    
+    if (value <= 0) {
+        errorEl.textContent = "Değer 0'dan büyük olmalıdır.";
+        input.classList.add("is-invalid");
+        return false;
+    }
+    
+    if (value < min || value > max) {
+        errorEl.textContent = `Değer ${min} ile ${max} cm arasında olmalıdır.`;
+        input.classList.add("is-invalid");
+        return false;
+    }
+    
+    errorEl.textContent = "";
+    input.classList.remove("is-invalid");
+    input.classList.add("is-valid");
+    return true;
+}
+
+// Form submit validasyonu
+document.getElementById("fishForm").onsubmit = function(event) {
+    let valid = true;
+
+    function err(id, msg) {
+        document.getElementById(id).textContent = msg;
+        valid = false;
+    }
+
+    function clear() {
+        document.querySelectorAll(".error-msg").forEach(e => e.textContent = "");
+        document.querySelectorAll(".is-invalid, .is-valid").forEach(e => {
+            e.classList.remove("is-invalid", "is-valid");
+        });
+    }
+
+    clear();
+
+    // Species kontrolü
+    const species = document.querySelector("select[name='species']").value;
+    if (!species) {
+        err("speciesError", "Lütfen bir balık türü seçiniz.");
+        document.getElementById("species").classList.add("is-invalid");
+    } else {
+        document.getElementById("species").classList.add("is-valid");
+    }
+
+    // Sayısal değerler
+    const l1Input = document.querySelector("input[name='length1']");
+    const l2Input = document.querySelector("input[name='length2']");
+    const l3Input = document.querySelector("input[name='length3']");
+    const heightInput = document.querySelector("input[name='height']");
+    const widthInput = document.querySelector("input[name='width']");
+
+    const l1 = parseFloat(l1Input.value);
+    const l2 = parseFloat(l2Input.value);
+    const l3 = parseFloat(l3Input.value);
+    const height = parseFloat(heightInput.value);
+    const width = parseFloat(widthInput.value);
+
+    // Uzunluk validasyonları
+    if (!validateField(l1Input, "Uzunluk 1", 1, 200, "l1Error")) valid = false;
+    if (!validateField(l2Input, "Uzunluk 2", 1, 200, "l2Error")) valid = false;
+    if (!validateField(l3Input, "Uzunluk 3", 1, 200, "l3Error")) valid = false;
+    if (!validateField(heightInput, "Yükseklik", 1, 50, "heightError")) valid = false;
+    if (!validateField(widthInput, "Genişlik", 1, 50, "widthError")) valid = false;
+
+    // Uzunluk mantık kontrolü
+    if (!isNaN(l1) && !isNaN(l2) && !isNaN(l3)) {
+        if (l2 < l1) {
+            err("l2Error", "Uzunluk 2, Uzunluk 1'den küçük olamaz.");
+            l2Input.classList.add("is-invalid");
+            valid = false;
+        }
+        if (l3 < l2) {
+            err("l3Error", "Uzunluk 3, Uzunluk 2'den küçük olamaz.");
+            l3Input.classList.add("is-invalid");
+            valid = false;
+        }
+    }
+
+    // Yükseklik ve genişlik mantık kontrolü
+    if (!isNaN(height) && !isNaN(width)) {
+        if (width > height * 2) {
+            err("widthError", "Genişlik, yüksekliğin 2 katından fazla olamaz.");
+            widthInput.classList.add("is-invalid");
+            valid = false;
+        }
+    }
+
+    if (!valid) {
+        event.preventDefault();
+        // İlk hataya scroll
+        const firstError = document.querySelector(".is-invalid");
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+            firstError.focus();
+        }
+    }
+};
+
+// Gerçek zamanlı validasyon için event listener'lar
+document.getElementById("length1").addEventListener("blur", function() {
+    validateField(this, "Uzunluk 1", 1, 200, "l1Error");
+});
+document.getElementById("length2").addEventListener("blur", function() {
+    validateField(this, "Uzunluk 2", 1, 200, "l2Error");
+});
+document.getElementById("length3").addEventListener("blur", function() {
+    validateField(this, "Uzunluk 3", 1, 200, "l3Error");
+});
+document.getElementById("height").addEventListener("blur", function() {
+    validateField(this, "Yükseklik", 1, 50, "heightError");
+});
+document.getElementById("width").addEventListener("blur", function() {
+    validateField(this, "Genişlik", 1, 50, "widthError");
+});
+</script>
+
+</body>
+</html>
